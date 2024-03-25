@@ -29,7 +29,7 @@ class GemmaConfig:
         # Extract configs used for building HLO
         self.intermediate_size = config.intermediate_size
         self.hidden_size = config.hidden_size
-        self.attention_head_size = config.hidden_size // config.num_attention_heads
+        self.attention_head_size = getattr(config, "head_dim", config.hidden_size // config.num_attention_heads)
         self.num_attention_heads = config.num_attention_heads
         self.num_key_value_heads = config.num_key_value_heads if hasattr(config, "num_key_value_heads") else config.num_attention_heads
         self.num_hidden_layers = config.num_hidden_layers

@@ -56,7 +56,7 @@ class GemmaForSamplingNoEmbeddingHlo:
             hidden = hlo.slice_along(hidden, dim=-1, limit=self.config.hidden_size, start=0)
         if self.neuron_config.attention_layout == LAYOUT_HSB:
             hidden = hlo.transpose210(hidden)
-        return hidden
+        return hidden / hlo.sqrt(self.config.hidden_size)
 
     def pre_layer(self, hidden, last_token_id, pos_embed, cache_ids, start_ids, mask, active_mask, *pre_layer_weights):
         if self.neuron_config.on_device_embedding:
@@ -82,7 +82,7 @@ class GemmaForSamplingNoEmbeddingHlo:
         ):
         eps = self.config.rms_norm_eps
         is_bsh = self.neuron_config and self.neuron_config.attention_layout == LAYOUT_BSH
-        ln_hidden = hlo.rms_norm(hidden, pre_attn_ln_weight, eps) if is_bsh else hlo.rms_norm(hidden, pre_attn_ln_weight, eps, dim=0)
+        ln_hidden = hlo.rms_norm_plus_one(hidden, pre_attn_ln_weight, eps) if is_bsh else hlo.rms_norm_plus_one(hidden, pre_attn_ln_weight, eps, dim=0)
         attn_output, out_attn_k_cache, out_attn_v_cache = self.attention(
             ln_hidden, cache_ids, start_ids, pos_embed, mask, active_mask,
             attn_k_cache, attn_v_cache,
@@ -94,14 +94,14 @@ class GemmaForSamplingNoEmbeddingHlo:
         hidden = hlo.add(attn_output, hidden)
         gated_mlp = hlo.gated_mlp_bsh if is_bsh else hlo.gated_mlp
         rms_norm_dim = 2 if is_bsh else 0
-        norm_hidden = hlo.rms_norm(hidden, pre_mlp_ln_weight, eps, dim=rms_norm_dim)
+        norm_hidden = hlo.rms_norm_plus_one(hidden, pre_mlp_ln_weight, eps, dim=rms_norm_dim)
         mlp_hidden = gated_mlp(
             norm_hidden,
             in0_weight, in1_weight, out_weight,
             in0_scales=in0_scales,
             in1_scales=in1_scales,
             out_scales=out_scales,
-            activation_function='silu',
+            activation_function='gelu_new',
             tp_degree=self.config.tp_degree,
             neuron_config=self.neuron_config
         )

@@ -33,8 +33,8 @@ class GemmaForSampling(base.NeuronModelBase):
     def __init__(self, config, *, n_positions=2048, batch_size=1, amp='f32', tp_degree=2,
                  context_length_estimate=None, context_unroll=None, unroll=None,
                  neuron_config=None, prefixed_length=0, **kwargs):
-        config = LlamaConfig(config, n_positions, batch_size, amp, tp_degree)
-        super().__init__(LlamaForCausalLM, config)
+        config = GemmaConfig(config, n_positions, batch_size, amp, tp_degree)
+        super().__init__(GemmaForCausalLM, config)
         self.context_pre_hook = None
         self.context_hook = None
         self.config = config
@@ -65,7 +65,7 @@ class GemmaForSampling(base.NeuronModelBase):
         else:
             raise TypeError("batch_size must be list of ints or int type")
         self.context_batch_sizes = [1] if self.neuron_config and self.neuron_config.continuous_batching else self.batch_sizes
-        hlo_builder = LlamaForSamplingNoEmbeddingHlo(config, neuron_config=self.neuron_config)
+        hlo_builder = GemmaForSamplingNoEmbeddingHlo(config, neuron_config=self.neuron_config)
         self.decoder_param_set = decoder.DecoderLmHeadForSamplingNoEmbedding(
             tp_degree=tp_degree, n_positions_list=self.token_buckets, n_active_tokens=1, batch_size=self.batch_sizes,
             attention_head_size=config.attention_head_size, amp=amp,
