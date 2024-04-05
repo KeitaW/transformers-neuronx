@@ -344,6 +344,11 @@ def sample_loop_llama(model, input_ids, start_ids, next_token_scores, sequence_l
 
     return torch.cat(tokens, dim=-1)
 
+@torch.no_grad()
+def sample_gemma(model, input_ids, start_ids, sequence_length, eos_token_id=2, top_k=50, top_p=1.0, temperature=1.0,
+                 streamer=None, stopping_criteria_list=None, no_repeat_ngram_size=None):
+    return sample_llama(model, input_ids, start_ids, sequence_length, eos_token_id, top_k, top_p, temperature,
+                 streamer, stopping_criteria_list, no_repeat_ngram_size)
 
 @torch.no_grad()
 def sample_llama(model, input_ids, start_ids, sequence_length, eos_token_id=2, top_k=50, top_p=1.0, temperature=1.0,

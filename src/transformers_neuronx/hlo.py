@@ -265,6 +265,15 @@ def group_norm_bsh(hidden, weight, bias, num_groups):
 
     return output
 
+def rms_norm_plus_one(hidden, weight, eps=1e-6, dim=2):
+    # dtype = hidden.dtype
+    # scribe = hidden.scribe
+    # f32 = scribe.f32
+    # batch_size, n_active_tokens, hidden_size = hidden.sizes
+    # hsb_size = hidden_size, n_active_tokens, batch_size
+    # one = cast(1, f32)
+    # weight = f32[hsb_size].Add(weight, one)
+    return rms_norm(hidden, weight, eps, dim)
 
 def rms_norm(hidden, weight, eps=1e-6, dim=2):
     # Reference: https://github.com/huggingface/transformers/blob/v4.29.2/src/transformers/models/t5/modeling_t5.py#L238-L260
